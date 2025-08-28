@@ -1,4 +1,4 @@
-use crate::hal::i2c::{Mock as I2cMock, Transaction as I2cTrans};
+use crate::hal::eh1::i2c::{Mock as I2cMock, Transaction as I2cTrans};
 use apds9960::Apds9960;
 
 pub const DEV_ADDR: u8 = 0x39;

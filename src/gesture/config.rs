@@ -1,20 +1,20 @@
 #[cfg(feature = "nb")]
-use crate::{Apds9960, Write};
+use crate::{Apds9960, I2c};
 #[cfg(feature = "async")]
 use crate::{Apds9960Async, I2cAsync};
 use {
     crate::register::{Enable, GConfig1, GConfig4},
-    crate::{BitFlags, Error, GestureDataThreshold, Register, DEV_ADDR},
+    crate::{BitFlags, DEV_ADDR, Error, GestureDataThreshold, Register},
 };
 
 /// Gesture engine configuration.
 #[maybe_async_cfg::maybe(
     sync(feature = "nb", keep_self),
-    async(feature = "async", idents(Write(async = "I2cAsync")))
+    async(feature = "async", idents(I2c(async = "I2cAsync")))
 )]
 impl<I2C, E> Apds9960<I2C>
 where
-    I2C: Write<Error = E>,
+    I2C: I2c<Error = E>,
 {
     /// Enable gesture detection
     pub async fn enable_gesture(&mut self) -> Result<(), Error<E>> {
@@ -58,13 +58,12 @@ where
         threshold: GestureDataThreshold,
     ) -> Result<(), Error<E>> {
         use GestureDataThreshold as GDTH;
-        let flags;
-        match threshold {
-            GDTH::Th1 => flags = (false, false),
-            GDTH::Th4 => flags = (false, true),
-            GDTH::Th8 => flags = (true, false),
-            GDTH::Th16 => flags = (true, true),
-        }
+        let flags = match threshold {
+            GDTH::Th1 => (false, false),
+            GDTH::Th4 => (false, true),
+            GDTH::Th8 => (true, false),
+            GDTH::Th16 => (true, true),
+        };
         let new = self
             .gconfig1
             .with(GConfig1::GFIFOTH1, flags.0)

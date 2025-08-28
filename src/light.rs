@@ -1,5 +1,5 @@
 #[cfg(feature = "nb")]
-use crate::{Apds9960, Write, WriteRead};
+use crate::{Apds9960, I2c};
 #[cfg(feature = "async")]
 use crate::{Apds9960Async, I2cAsync};
 use {
@@ -15,16 +15,12 @@ use nb::Result as NbResult;
     sync(feature = "nb", keep_self),
     async(
         feature = "async",
-        idents(
-            Write(async = "I2cAsync"),
-            WriteRead(async = "I2cAsync"),
-            NbResult(async = "Result")
-        )
+        idents(I2c(async = "I2cAsync"), NbResult(async = "Result"))
     )
 )]
 impl<I2C, E> Apds9960<I2C>
 where
-    I2C: Write<Error = E> + WriteRead<Error = E>,
+    I2C: I2c<Error = E>,
 {
     /// Enable color and ambient light detection.
     pub async fn enable_light(&mut self) -> Result<(), Error<E>> {
@@ -174,6 +170,7 @@ where
             .map_err(nb::Error::Other)?;
         Ok((u16::from(data[1]) << 8) | u16::from(data[0]))
     }
+
     #[maybe_async_cfg::only_if(async)]
     async fn read_light_channel(&mut self, register: u8) -> Result<u16, Error<E>> {
         while !self.is_light_data_valid().await? {}

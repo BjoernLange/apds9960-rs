@@ -1,8 +1,8 @@
 extern crate apds9960;
 extern crate embedded_hal_mock as hal;
-use crate::hal::i2c::Transaction as I2cTrans;
+use crate::hal::eh1::i2c::Transaction as I2cTrans;
 mod common;
-use crate::common::{destroy, new, BitFlags, Register, DEFAULT_CONFIG2, DEV_ADDR};
+use crate::common::{BitFlags, DEFAULT_CONFIG2, DEV_ADDR, Register, destroy, new};
 
 write_test!(can_enable, enable_proximity, ENABLE, BitFlags::PEN);
 write_test!(can_disable, disable_proximity, ENABLE, 0);
@@ -41,7 +41,7 @@ write_test!(
 
 #[test]
 fn can_set_poffsets() {
-    let data = vec![Register::POFFSET_UR, 55, i8::from(-56) as u8];
+    let data = vec![Register::POFFSET_UR, 55, -56i8 as u8];
     let trans = [I2cTrans::write(DEV_ADDR, data)];
     let mut sensor = new(&trans);
     sensor.set_proximity_offsets(55, -56).unwrap();
