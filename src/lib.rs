@@ -99,12 +99,9 @@
 //!
 //! ### Read proximity
 //!
+#![cfg_attr(all(feature = "nb", target_os = "linux"), doc = " ```no_run")]
 #![cfg_attr(
-    all(feature = "nb", feature = "linux-embedded-hal"),
-    doc = " ```no_run"
-)]
-#![cfg_attr(
-    not(all(feature = "nb", feature = "linux-embedded-hal")),
+    not(all(feature = "nb", target_os = "linux")),
     doc = " ```no_run,ignore"
 )]
 //! extern crate linux_embedded_hal as hal;
@@ -129,12 +126,9 @@
 //!
 //! ### Read color / ambient light data
 //!
+#![cfg_attr(all(feature = "nb", target_os = "linux"), doc = " ```no_run")]
 #![cfg_attr(
-    all(feature = "nb", feature = "linux-embedded-hal"),
-    doc = " ```no_run"
-)]
-#![cfg_attr(
-    not(all(feature = "nb", feature = "linux-embedded-hal")),
+    not(all(feature = "nb", target_os = "linux")),
     doc = " ```no_run,ignore"
 )]
 //! extern crate linux_embedded_hal as hal;
@@ -165,12 +159,9 @@
 //!
 //! ### Read gesture data
 //!
+#![cfg_attr(all(feature = "nb", target_os = "linux"), doc = " ```no_run")]
 #![cfg_attr(
-    all(feature = "nb", feature = "linux-embedded-hal"),
-    doc = " ```no_run"
-)]
-#![cfg_attr(
-    not(all(feature = "nb", feature = "linux-embedded-hal")),
+    not(all(feature = "nb", target_os = "linux")),
     doc = " ```no_run,ignore"
 )]
 //! extern crate linux_embedded_hal as hal;
@@ -233,7 +224,7 @@
 #[cfg(feature = "nb")]
 extern crate embedded_hal as hal;
 #[cfg(feature = "nb")]
-use crate::hal::blocking::i2c::{Write, WriteRead};
+use crate::hal::i2c::I2c;
 #[cfg(feature = "async")]
 extern crate embedded_hal_async as hal_async;
 #[cfg(feature = "nb")]
@@ -372,7 +363,7 @@ mod register {
 
     impl Default for Config1 {
         fn default() -> Self {
-            Self { 0: 0x40 }
+            Self(0x40)
         }
     }
 
@@ -386,7 +377,7 @@ mod register {
 
     impl Default for Config2 {
         fn default() -> Self {
-            Self { 0: 1 }
+            Self(1)
         }
     }
 
@@ -438,11 +429,11 @@ pub struct Apds9960<I2C> {
 
 #[maybe_async_cfg::maybe(
     sync(feature = "nb", keep_self),
-    async(feature = "async", idents(Write(async = "I2cAsync")))
+    async(feature = "async", idents(I2c(async = "I2cAsync")))
 )]
 impl<I2C, E> Apds9960<I2C>
 where
-    I2C: Write<Error = E>,
+    I2C: I2c<Error = E>,
 {
     /// Create new instance of the APDS9960 device.
     pub fn new(i2c: I2C) -> Self {

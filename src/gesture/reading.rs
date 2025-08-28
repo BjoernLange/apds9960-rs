@@ -1,17 +1,17 @@
-use crate::{register::GStatus, BitFlags, Error, Register};
 #[cfg(feature = "nb")]
-use crate::{Apds9960, WriteRead};
+use crate::{Apds9960, I2c};
 #[cfg(feature = "async")]
 use crate::{Apds9960Async, I2cAsync};
+use crate::{BitFlags, Error, Register, register::GStatus};
 
 /// Gesture data reading.
 #[maybe_async_cfg::maybe(
     sync(feature = "nb", keep_self),
-    async(feature = "async", idents(WriteRead(async = "I2cAsync")))
+    async(feature = "async", idents(I2c(async = "I2cAsync")))
 )]
 impl<I2C, E> Apds9960<I2C>
 where
-    I2C: WriteRead<Error = E>,
+    I2C: I2c<Error = E>,
 {
     /// Read the amount of available data in the gesture FIFO registers.
     pub async fn read_gesture_data_level(&mut self) -> Result<u8, Error<E>> {

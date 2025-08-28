@@ -1,23 +1,20 @@
 #[cfg(feature = "nb")]
-use crate::{Apds9960, Write, WriteRead};
+use crate::{Apds9960, I2c};
 #[cfg(feature = "async")]
 use crate::{Apds9960Async, I2cAsync};
 use {
     crate::register::{Config2, Enable, Status},
-    crate::{BitFlags, Error, Register, DEV_ADDR},
+    crate::{BitFlags, DEV_ADDR, Error, Register},
 };
 
 /// Proximity.
 #[maybe_async_cfg::maybe(
     sync(feature = "nb", keep_self),
-    async(
-        feature = "async",
-        idents(Write(async = "I2cAsync"), WriteRead(async = "I2cAsync"))
-    )
+    async(feature = "async", idents(I2c(async = "I2cAsync")))
 )]
 impl<I2C, E> Apds9960<I2C>
 where
-    I2C: Write<Error = E> + WriteRead<Error = E>,
+    I2C: I2c<Error = E>,
 {
     /// Enable proximity detection
     pub async fn enable_proximity(&mut self) -> Result<(), Error<E>> {

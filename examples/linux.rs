@@ -1,10 +1,10 @@
 use apds9960::Apds9960;
 #[cfg(target_os = "linux")]
 use linux_embedded_hal::I2cdev;
+use nb::block;
 
 #[cfg(not(target_os = "linux"))]
-fn main() {
-}
+fn main() {}
 
 #[cfg(target_os = "linux")]
 fn main() {
