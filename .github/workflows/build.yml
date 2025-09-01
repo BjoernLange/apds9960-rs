@@ -5,7 +5,7 @@ on:
 name: Build
 
 env:
-  RUSTFLAGS: '--deny warnings'
+  RUSTFLAGS: "--deny warnings"
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [stable, 1.56.0]
+        rust: [stable, 1.85]
         TARGET:
           - x86_64-unknown-linux-gnu
           - x86_64-unknown-linux-musl
@@ -26,29 +26,25 @@ jobs:
           - thumbv7m-none-eabi
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.TARGET }}
           override: true
 
-      - name: Checkout CI scripts
-        uses: actions/checkout@v2
-        with:
-          repository: 'eldruin/rust-driver-ci-scripts'
-          ref: 'master'
-          path: 'ci'
+      #- name: Checkout CI scripts
+      #  uses: actions/checkout@v4
+      #  with:
+      #    repository: "eldruin/rust-driver-ci-scripts"
+      #    ref: "master"
+      #    path: "ci"
 
-      - run: ./ci/patch-no-std.sh
-        if: ${{ ! contains(matrix.TARGET, 'x86_64') }}
+      #- run: ./ci/patch-no-std.sh
+      #  if: ${{ ! contains(matrix.TARGET, 'x86_64') }}
 
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --target=${{ matrix.TARGET }}
+        run: cargo build --target=${{ matrix.TARGET }}
 
   checks:
     name: Checks
@@ -60,49 +56,40 @@ jobs:
           - x86_64-unknown-linux-gnu
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.TARGET }}
           override: true
           components: rustfmt
 
       - name: Doc
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
+        run: cargo doc
 
       - name: Formatting
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [1.52.1]
+        rust: [1.85]
         TARGET:
           - x86_64-unknown-linux-gnu
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.TARGET }}
           override: true
           components: clippy
 
       - name: Clippy
-        uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: cargo clippy
 
   test:
     name: Tests
@@ -112,40 +99,12 @@ jobs:
         rust: [stable, beta]
         TARGET: [x86_64-unknown-linux-gnu, x86_64-unknown-linux-musl]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.TARGET }}
           override: true
 
       - name: Test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --target=${{ matrix.TARGET }}
-
-  coverage:
-    name: Coverage
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      - name: Run cargo-tarpaulin
-        uses: actions-rs/tarpaulin@v0.1
-        with:
-          args: '--out Lcov -- --test-threads 1'
-
-      - name: upload to Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: './lcov.info'
+        run: cargo test --target=${{ matrix.TARGET }}
