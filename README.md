@@ -72,6 +72,7 @@ extern crate apds9960;
 
 use apds9960::Apds9960;
 use linux_embedded_hal::I2cdev;
+use nb::block;
 
 fn main() {
     let dev = I2cdev::new("/dev/i2c-1").unwrap();
