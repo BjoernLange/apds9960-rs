@@ -63,6 +63,8 @@ Please find additional examples using hardware in this repository: [driver-examp
 
 [driver-examples]: https://github.com/eldruin/driver-examples
 
+### Sync
+
 ```rust
 extern crate embedded_hal;
 extern crate linux_embedded_hal;
@@ -82,6 +84,37 @@ fn main() {
     loop {
         let p = block!(sensor.read_proximity()).unwrap();
         println!("Proximity: {}", p);
+    }
+}
+```
+
+### Async
+
+To use async Rust disable default features and enable the `async` feature.
+
+```rust
+extern crate embedded_hal_async;
+extern crate embassy_executor;
+extern crate defmt;
+extern crate apds9960;
+
+use apds9960::Apds9960Async;
+use defmt::info;
+use embedded_hal_async::i2c::I2c;
+
+async fn setup_i2c() -> impl I2c {
+    // Setup I2C...
+}
+
+#[embassy_executor::main]
+async fn main() {
+    let dev = setup_i2c().await;
+    let mut sensor = Apds9960Async::new(dev);
+    sensor.enable().await.unwrap();
+    sensor.enable_proximity().await.unwrap();
+    loop {
+        let p = sensor.read_proximity().await.unwrap();
+        info!("Proximity: {}", proximity);
     }
 }
 ```
