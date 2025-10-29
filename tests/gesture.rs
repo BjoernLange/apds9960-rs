@@ -48,6 +48,19 @@ fn can_set_goffsets() {
     destroy(sensor);
 }
 
+#[test]
+fn can_set_goffsets_async() {
+    let data = vec![Register::GOFFSET_U, 55, -56i8 as u8, 100, -101i8 as u8];
+    let trans = [I2cTrans::write(DEV_ADDR, data)];
+    let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&trans);
+    let mut sensor = ::apds9960::Apds9960::new_async(
+        ::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock),
+    );
+    ::futures::executor::block_on(sensor.set_gesture_offsets(55, -56, 100, -101)).unwrap();
+    drop(sensor.destroy());
+    mock.done();
+}
+
 read_test!(
     can_read_gvalid_true,
     is_gesture_data_valid,
@@ -113,6 +126,24 @@ macro_rules! read_data_test {
             assert_eq!($expected, data);
             destroy(sensor);
         }
+
+        ::paste::paste! {
+            #[test]
+            fn [< $name _async >]() {
+                let trans = [
+                    $(
+                        I2cTrans::write_read(DEV_ADDR, vec![Register::$reg], vec![$($value,)*]),
+                    )*
+                ];
+                let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&trans);
+                let mut sensor = ::apds9960::Apds9960::new_async(::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock));
+                let mut data = [0; $data_size];
+                ::futures::executor::block_on(sensor.$method(&mut data)).unwrap();
+                assert_eq!($expected, data);
+                drop(sensor.destroy());
+                mock.done();
+            }
+        }
     };
 }
 
@@ -154,15 +185,6 @@ read_data_test!(
     GFIFO_U,
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 );
-
-macro_rules! assert_would_block {
-    ($result: expr) => {
-        match $result {
-            Err(nb::Error::WouldBlock) => (),
-            _ => panic!("Would not block."),
-        }
-    };
-}
 
 #[test]
 fn cannot_read_gesture_if_not_valid() {
