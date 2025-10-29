@@ -1,6 +1,6 @@
 pub(super) use embedded_hal_mock::eh1::i2c::{Mock as I2cMock, Transaction as I2cTrans};
 
-use apds9960::Apds9960;
+use apds9960::{Apds9960, SyncNonBlocking};
 
 pub const DEV_ADDR: u8 = 0x39;
 
@@ -71,11 +71,11 @@ pub const DEFAULT_CONFIG1: u8 = 0x40;
 #[allow(unused)]
 pub const DEFAULT_CONFIG2: u8 = 1;
 
-pub fn new(transactions: &[I2cTrans]) -> Apds9960<I2cMock> {
+pub fn new(transactions: &[I2cTrans]) -> Apds9960<I2cMock, SyncNonBlocking> {
     Apds9960::new(I2cMock::new(transactions))
 }
 
-pub fn destroy(sensor: Apds9960<I2cMock>) {
+pub fn destroy(sensor: Apds9960<I2cMock, SyncNonBlocking>) {
     sensor.destroy().done();
 }
 

@@ -1,14 +1,21 @@
-#[cfg(feature = "nb")]
-use crate::{Apds9960, I2c};
+use crate::{Apds9960, DEV_ADDR, Error, Register};
 #[cfg(feature = "async")]
-use crate::{Apds9960Async, I2cAsync};
-use crate::{DEV_ADDR, Error, Register};
+use crate::{Async, I2cAsync};
+#[cfg(feature = "nb")]
+use crate::{I2c, SyncNonBlocking};
 
 #[maybe_async_cfg::maybe(
     sync(feature = "nb", keep_self),
-    async(feature = "async", idents(I2c(async = "I2cAsync")))
+    async(
+        feature = "async",
+        idents(
+            I2c(async = "I2cAsync"),
+            SyncNonBlocking(async = "Async"),
+            Apds9960(keep)
+        )
+    )
 )]
-impl<I2C, E> Apds9960<I2C>
+impl<I2C, E> Apds9960<I2C, SyncNonBlocking>
 where
     I2C: I2c<Error = E>,
 {

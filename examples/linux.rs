@@ -8,7 +8,7 @@ fn main() {
     use nb::block;
 
     let dev = I2cdev::new("/dev/i2c-1").unwrap();
-    let mut sensor = Apds9960::new(dev);
+    let mut sensor = Apds9960::new_non_blocking(dev);
     sensor.enable().unwrap();
     sensor.enable_proximity().unwrap();
     loop {
