@@ -72,7 +72,7 @@ pub const DEFAULT_CONFIG1: u8 = 0x40;
 pub const DEFAULT_CONFIG2: u8 = 1;
 
 pub fn new(transactions: &[I2cTrans]) -> Apds9960<I2cMock, SyncNonBlocking> {
-    Apds9960::new(I2cMock::new(transactions))
+    Apds9960::new_non_blocking(I2cMock::new(transactions))
 }
 
 pub fn destroy(sensor: Apds9960<I2cMock, SyncNonBlocking>) {
@@ -85,9 +85,21 @@ macro_rules! empty_write_test {
         #[test]
         fn $name() {
             let trans = [I2cTrans::write(DEV_ADDR, vec![Register::$reg])];
-            let mut sensor = new(&trans);
+            let mut sensor = $crate::common::new(&trans);
             sensor.$method().unwrap();
-            destroy(sensor);
+            $crate::common::destroy(sensor);
+        }
+
+        ::paste::paste! {
+            #[test]
+            fn [< $name _async >]() {
+                let trans = [I2cTrans::write(DEV_ADDR, vec![Register::$reg])];
+                let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&trans);
+                let mut sensor = ::apds9960::Apds9960::new_async(::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock));
+                ::futures::executor::block_on(sensor.$method()).unwrap();
+                drop(sensor.destroy());
+                mock.done();
+            }
         }
     };
 }
@@ -101,6 +113,18 @@ macro_rules! write_test {
             let mut sensor = new(&trans);
             sensor.$method($( $arg ),*).unwrap();
             destroy(sensor);
+        }
+
+        ::paste::paste! {
+            #[test]
+            fn [< $name _async >]() {
+                let trans = [I2cTrans::write(DEV_ADDR, vec![Register::$reg, $value])];
+                let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&trans);
+                let mut sensor = ::apds9960::Apds9960::new_async(::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock));
+                ::futures::executor::block_on(sensor.$method($( $arg ),*)).unwrap();
+                drop(sensor.destroy());
+                mock.done();
+            }
         }
     };
 }
@@ -119,6 +143,22 @@ macro_rules! read_test {
             let value = sensor.$method().unwrap();
             assert_eq!($expected, value);
             destroy(sensor);
+        }
+
+        ::paste::paste! {
+            #[test]
+            fn [< $name _async >]() {
+                let trans = [
+                    $(
+                        I2cTrans::write_read(DEV_ADDR, vec![Register::$reg], vec![$value]),
+                    )*
+                ];
+                let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&trans);
+                let mut sensor = ::apds9960::Apds9960::new_async(::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock));
+                ::futures::executor::block_on(sensor.$method()).unwrap();
+                drop(sensor.destroy());
+                mock.done();
+            }
         }
     };
 }
