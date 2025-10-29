@@ -114,7 +114,7 @@
 //!
 //! # fn main() {
 //! let dev = I2cdev::new("/dev/i2c-1").unwrap();
-//! let mut sensor = Apds9960::new(dev);
+//! let mut sensor = Apds9960::new_non_blocking(dev);
 //! sensor.enable().unwrap();
 //! sensor.enable_proximity().unwrap();
 //! loop {
@@ -141,7 +141,7 @@
 //!
 //! # fn main() {
 //! let dev = I2cdev::new("/dev/i2c-1").unwrap();
-//! let mut sensor = Apds9960::new(dev);
+//! let mut sensor = Apds9960::new_non_blocking(dev);
 //! sensor.enable().unwrap();
 //! sensor.enable_light().unwrap();
 //! loop {
@@ -174,7 +174,7 @@
 //!
 //! # fn main() {
 //! let dev = I2cdev::new("/dev/i2c-1").unwrap();
-//! let mut sensor = Apds9960::new(dev);
+//! let mut sensor = Apds9960::new_non_blocking(dev);
 //! sensor.enable().unwrap();
 //! sensor.enable_gesture().unwrap();
 //! sensor.enable_gesture_mode().unwrap();
@@ -202,7 +202,7 @@
 //! # async fn main(p: Peripherals) {
 //! let irq = interrupt::take!(SPIM0_SPIS0_TWIM0_TWIS0_SPI0_TWI0);
 //! let i2c = Twim::new(p.TWISPI0, ireq, p.P0_12, p.P0_11, twim::Config::default());
-//! let mut sensor = Apds9960Async::new(dev);
+//! let mut sensor = Apds9960Async::new_non_blocking(dev);
 //! sensor.enable().await.unwrap();
 //! sensor.enable_light().await.unwrap();
 //! loop {
@@ -223,6 +223,8 @@
 
 #[cfg(feature = "nb")]
 extern crate embedded_hal as hal;
+use core::marker::PhantomData;
+
 #[cfg(feature = "nb")]
 use crate::hal::i2c::I2c;
 #[cfg(feature = "async")]
@@ -231,6 +233,12 @@ extern crate embedded_hal_async as hal_async;
 extern crate nb;
 #[cfg(feature = "async")]
 use crate::hal_async::i2c::I2c as I2cAsync;
+
+mod config;
+mod gesture;
+mod light;
+mod proximity;
+mod reading;
 
 /// All possible errors in this crate
 #[derive(Debug)]
@@ -415,9 +423,8 @@ mod register {
 }
 
 /// APDS9960 device driver.
-#[maybe_async_cfg::maybe(sync(feature = "nb", keep_self), async(feature = "async"))]
 #[derive(Debug, Default)]
-pub struct Apds9960<I2C> {
+pub struct Apds9960<I2C, M: Mode> {
     /// The concrete I²C device implementation.
     i2c: I2C,
     enable: register::Enable,
@@ -425,16 +432,10 @@ pub struct Apds9960<I2C> {
     config2: register::Config2,
     gconfig1: register::GConfig1,
     gconfig4: register::GConfig4,
+    phantom: PhantomData<M>,
 }
 
-#[maybe_async_cfg::maybe(
-    sync(feature = "nb", keep_self),
-    async(feature = "async", idents(I2c(async = "I2cAsync")))
-)]
-impl<I2C, E> Apds9960<I2C>
-where
-    I2C: I2c<Error = E>,
-{
+impl<I2C, M: Mode> Apds9960<I2C, M> {
     /// Create new instance of the APDS9960 device.
     pub fn new(i2c: I2C) -> Self {
         Apds9960 {
@@ -444,6 +445,7 @@ where
             config2: register::Config2::default(),
             gconfig1: register::GConfig1::default(),
             gconfig4: register::GConfig4::default(),
+            phantom: PhantomData,
         }
     }
 
@@ -453,8 +455,44 @@ where
     }
 }
 
-mod config;
-mod gesture;
-mod light;
-mod proximity;
-mod reading;
+#[cfg(feature = "nb")]
+impl<I2C> Apds9960<I2C, SyncNonBlocking> {
+    /// Create new instance of the APDS9960 device.
+    pub fn new_non_blocking(i2c: I2C) -> Self {
+        Apds9960::new(i2c)
+    }
+}
+#[cfg(feature = "async")]
+impl<I2C> Apds9960<I2C, Async> {
+    /// Create new instance of the APDS9960 device.
+    pub fn new_async(i2c: I2C) -> Self {
+        Apds9960::new(i2c)
+    }
+}
+
+trait SealedMode {}
+
+/// Driver mode.
+#[expect(
+    private_bounds,
+    reason = "we want the trait to be sealed, but nameable"
+)]
+pub trait Mode: SealedMode {}
+
+macro_rules! impl_mode {
+    ($name:ident) => {
+        impl SealedMode for $name {}
+        impl Mode for $name {}
+    };
+}
+
+/// Blocking mode.
+#[cfg(feature = "nb")]
+pub struct SyncNonBlocking;
+#[cfg(feature = "nb")]
+impl_mode!(SyncNonBlocking);
+/// Async mode.
+#[cfg(feature = "async")]
+pub struct Async;
+#[cfg(feature = "async")]
+impl_mode!(Async);
