@@ -1,10 +1,10 @@
-#[cfg(feature = "nb")]
-use crate::{Apds9960, I2c};
 #[cfg(feature = "async")]
-use crate::{Apds9960Async, I2cAsync};
+use crate::{Async, I2cAsync};
+#[cfg(feature = "nb")]
+use crate::{I2c, SyncNonBlocking};
 use {
     crate::register::{Config1, Enable},
-    crate::{BitFlags, DEV_ADDR, Error, Register},
+    crate::{Apds9960, BitFlags, DEV_ADDR, Error, Register},
 };
 
 #[cfg(feature = "nb")]
@@ -36,10 +36,15 @@ macro_rules! impl_set_flag_reg_async {
     sync(feature = "nb", keep_self),
     async(
         feature = "async",
-        idents(impl_set_flag_reg(fn), I2c(async = "I2cAsync"))
+        idents(
+            I2c(async = "I2cAsync"),
+            SyncNonBlocking(async = "Async"),
+            Apds9960(keep),
+            impl_set_flag_reg(fn),
+        )
     )
 )]
-impl<I2C, E> Apds9960<I2C>
+impl<I2C, E> Apds9960<I2C, SyncNonBlocking>
 where
     I2C: I2c<Error = E>,
 {
