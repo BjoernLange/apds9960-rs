@@ -1,8 +1,5 @@
-extern crate apds9960;
-extern crate embedded_hal_mock as hal;
-use crate::hal::eh1::i2c::Transaction as I2cTrans;
 mod common;
-use crate::common::{BitFlags, DEFAULT_CONFIG1, DEV_ADDR, Register, destroy, new};
+use crate::common::{BitFlags, DEFAULT_CONFIG1, DEV_ADDR, I2cTrans, Register, destroy, new};
 
 #[test]
 fn can_create() {
