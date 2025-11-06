@@ -31,11 +31,35 @@ fn set_low_threshold() {
 }
 
 #[test]
+fn set_low_threshold_async() {
+    let trans = [I2cTrans::write(DEV_ADDR, vec![Register::AILTL, 0xCD, 0xAB])];
+    let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&trans);
+    let mut sensor = ::apds9960::Apds9960::new_async(
+        ::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock),
+    );
+    ::futures::executor::block_on(sensor.set_light_low_threshold(0xABCD)).unwrap();
+    drop(sensor.destroy());
+    mock.done();
+}
+
+#[test]
 fn set_high_threshold() {
     let trans = [I2cTrans::write(DEV_ADDR, vec![Register::AIHTL, 0xCD, 0xAB])];
     let mut sensor = new(&trans);
     sensor.set_light_high_threshold(0xABCD).unwrap();
     destroy(sensor);
+}
+
+#[test]
+fn set_high_threshold_async() {
+    let trans = [I2cTrans::write(DEV_ADDR, vec![Register::AIHTL, 0xCD, 0xAB])];
+    let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&trans);
+    let mut sensor = ::apds9960::Apds9960::new_async(
+        ::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock),
+    );
+    ::futures::executor::block_on(sensor.set_light_high_threshold(0xABCD)).unwrap();
+    drop(sensor.destroy());
+    mock.done();
 }
 
 read_test!(
@@ -60,6 +84,23 @@ macro_rules! read_data_test {
             let reading = sensor.$method().unwrap();
             assert_eq!($expected, reading);
             destroy(sensor);
+        }
+
+        ::paste::paste! {
+            #[test]
+            fn [< $name _async >]() {
+                let trans = [
+                    $(
+                        I2cTrans::write_read(DEV_ADDR, vec![Register::$reg], vec![$($value,)*]),
+                    )*
+                ];
+                let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&trans);
+                let mut sensor = ::apds9960::Apds9960::new_async(::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock));
+                let reading = ::futures::executor::block_on(sensor.$method()).unwrap();
+                assert_eq!($expected, reading);
+                drop(sensor.destroy());
+                mock.done();
+            }
         }
     };
 }

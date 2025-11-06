@@ -45,6 +45,19 @@ fn can_set_poffsets() {
     destroy(sensor);
 }
 
+#[test]
+fn can_set_poffsets_async() {
+    let data = vec![Register::POFFSET_UR, 55, -56i8 as u8];
+    let trans = [I2cTrans::write(DEV_ADDR, data)];
+    let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&trans);
+    let mut sensor = ::apds9960::Apds9960::new_async(
+        ::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock),
+    );
+    ::futures::executor::block_on(sensor.set_proximity_offsets(55, -56)).unwrap();
+    drop(sensor.destroy());
+    mock.done();
+}
+
 empty_write_test!(clear_int, clear_proximity_interrupt, PICLEAR);
 
 read_test!(

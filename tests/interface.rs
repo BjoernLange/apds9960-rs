@@ -7,6 +7,19 @@ fn can_create() {
     destroy(sensor);
 }
 
+#[test]
+fn can_create_async() {
+    let sensor = new(&[]);
+    destroy(sensor);
+
+    let mut mock = ::embedded_hal_mock::eh1::i2c::Mock::new(&[]);
+    let sensor = ::apds9960::Apds9960::new_async(
+        ::embassy_embedded_hal::adapter::BlockingAsync::new(&mut mock),
+    );
+    drop(sensor.destroy());
+    mock.done();
+}
+
 write_test!(can_enable, enable, ENABLE, BitFlags::PON);
 write_test!(can_disable, disable, ENABLE, 0);
 

@@ -1,10 +1,10 @@
-#[cfg(feature = "nb")]
-use crate::{Apds9960, I2c};
 #[cfg(feature = "async")]
-use crate::{Apds9960Async, I2cAsync};
+use crate::{Async, I2cAsync};
+#[cfg(feature = "nb")]
+use crate::{I2c, SyncNonBlocking};
 use {
     crate::register::{Config2, Enable, Status},
-    crate::{BitFlags, Error, LightData, Register},
+    crate::{Apds9960, BitFlags, Error, LightData, Register},
 };
 
 #[cfg(feature = "nb")]
@@ -15,10 +15,15 @@ use nb::Result as NbResult;
     sync(feature = "nb", keep_self),
     async(
         feature = "async",
-        idents(I2c(async = "I2cAsync"), NbResult(async = "Result"))
+        idents(
+            I2c(async = "I2cAsync"),
+            SyncNonBlocking(async = "Async"),
+            NbResult(async = "Result"),
+            Apds9960(keep)
+        )
     )
 )]
-impl<I2C, E> Apds9960<I2C>
+impl<I2C, E> Apds9960<I2C, SyncNonBlocking>
 where
     I2C: I2c<Error = E>,
 {
@@ -87,7 +92,7 @@ where
     /// Returns `nb::Error::WouldBlock` as long as the data is not ready.
     /// This clears the data ready flag.
     #[maybe_async_cfg::only_if(sync)]
-    pub fn read_light(&mut self) -> nb::Result<LightData, Error<E>> {
+    pub fn read_light(&mut self) -> NbResult<LightData, Error<E>> {
         if !self.is_light_data_valid().map_err(nb::Error::Other)? {
             return Err(nb::Error::WouldBlock);
         }
