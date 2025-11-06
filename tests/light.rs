@@ -1,9 +1,7 @@
-extern crate apds9960;
 use apds9960::LightData;
-extern crate embedded_hal_mock as hal;
-use crate::hal::eh1::i2c::Transaction as I2cTrans;
+
 mod common;
-use crate::common::{BitFlags, DEFAULT_CONFIG2, DEV_ADDR, Register, destroy, new};
+use crate::common::{BitFlags, DEFAULT_CONFIG2, DEV_ADDR, I2cTrans, Register, destroy, new};
 
 write_test!(enable, enable_light, ENABLE, BitFlags::AEN);
 write_test!(disable, disable_light, ENABLE, 0);
