@@ -3,8 +3,12 @@ name = "apds9960"
 version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
-authors = ["Diego Barrios Romero <eldruin@gmail.com>"]
-repository = "https://github.com/eldruin/apds9960-rs"
+authors = [
+    "Björn Barwinski <bjoern.lange@tu-dortmund.de>", 
+    "Domenic Quirl <domenicquirl@t-online.de>", 
+    "Diego Barrios Romero <eldruin@gmail.com>"
+]
+repository = "https://github.com/BjoernLange/apds9960-rs"
 license = "MIT OR Apache-2.0"
 description = "Platform-agnostic Rust driver for the APDS9960 digital proximity, ambient light, RGB and gesture sensor."
 readme = "README.md"
