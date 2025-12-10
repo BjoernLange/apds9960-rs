@@ -43,3 +43,23 @@ linux-embedded-hal = "0.4"
 
 [profile.release]
 lto = true
+
+[[example]]
+name = "linux"
+required-features = ["nb"]
+
+[[test]]
+name = "gesture"
+required-features = ["nb", "async"]
+
+[[test]]
+name = "interface"
+required-features = ["nb", "async"]
+
+[[test]]
+name = "light"
+required-features = ["nb", "async"]
+
+[[test]]
+name = "proximity"
+required-features = ["nb", "async"]
