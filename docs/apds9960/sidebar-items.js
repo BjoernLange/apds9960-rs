@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error","GestureDataThreshold"],"struct":["Apds9960","Async","LightData","SyncNonBlocking"],"trait":["Mode"]};
